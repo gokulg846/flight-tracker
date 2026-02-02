@@ -24,6 +24,7 @@ graph LR
     linkStyle 0 stroke:#f66,stroke-width:2px,color:white;
     linkStyle 1 stroke:#f66,stroke-width:2px,color:white;
     linkStyle 2 stroke:#6f6,stroke-width:2px,color:white;
+    linkStyle 3 stroke:black,stroke-width:2px,color:white;
 ```
 ## 3. Technology Stack
 
@@ -104,5 +105,6 @@ A single event travels through the system as follows:
 * **Persistent Storage:** Add a database (PostgreSQL/TimescaleDB) to save flight history.
 * **Authentication:** Secure the WebSocket endpoint using JWT tokens.
 * **ProtoBuf:** Replace JSON with Protocol Buffers for faster serialization in high-load scenarios.
+
 
 
