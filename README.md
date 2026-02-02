@@ -46,3 +46,51 @@ graph LR
     P[Producer] -- "JSON Stream" --> B["Redpanda (Kafka)"]
     B -- "Async Consumer" --> S["FastAPI Backend"]
     S -- "WebSocket Push" --> C["React Frontend"]
+
+```
+
+*(For a deep dive into the engineering decisions, check out [ARCHITECTURE.md](./ARCHITECTURE.md))*
+
+## 🚀 Getting Started
+
+You can run the entire system locally using Docker.
+
+### Prerequisites
+* Docker & Docker Compose installed on your machine.
+
+### Installation
+
+1. **Clone the repo**
+   ```bash
+   git clone [https://github.com/YOUR_USERNAME/flight-tracker.git](https://github.com/YOUR_USERNAME/flight-tracker.git)
+   cd flight-tracker
+   
+2. **Start the services**
+   ```bash
+   docker-compose up -d --build
+
+3. **Run the producer to start injesting data with the free OpenSky API** If the API limit hits, run mock_producer.py to generate fake data instead.
+   ```bash
+   pip install kafka-python
+   python3 producer.py
+
+4. **View dashboard** Head to http://localhost:3000 to view the map with live data. (Future update will add files to host on streamlit)
+
+## 📂 Project Structure
+```
+flight-tracker/
+├── app/                  # FastAPI Backend
+│   ├── main.py           # Consumer & WebSocket logic
+│   └── Dockerfile
+├── frontend/             # React Application
+│   ├── src/              # Components & Map Logic
+│   └── Dockerfile
+├── mock_producer.py      # Data Generator Script
+├── docker-compose.yml    # Infrastructure Orchestration
+└── ARCHITECTURE.md       # Technical Documentation
+```
+
+📝 License
+Distributed under the MIT License.
+
+Built with 💻 and ☕ by Gokul
