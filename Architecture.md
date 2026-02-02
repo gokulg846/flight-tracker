@@ -9,8 +9,8 @@ The system creates a continuous data pipeline:
 ## 2. Architecture Diagram
 
 ```mermaid
-graph LR
-    subgraph "Infrastructure (Docker Network)"
+
+flowchart LR
         P[Producer (Python)] -- "TCP/9092" --> B[Message Broker (Redpanda)]
         B -- "TCP/29092" --> S[Backend API (FastAPI)]
         S -- "ws://localhost:8000" --> C[Frontend (React)]
@@ -104,4 +104,5 @@ A single event travels through the system as follows:
 ## 7. Future Improvements
 * **Persistent Storage:** Add a database (PostgreSQL/TimescaleDB) to save flight history.
 * **Authentication:** Secure the WebSocket endpoint using JWT tokens.
+
 * **ProtoBuf:** Replace JSON with Protocol Buffers for faster serialization in high-load scenarios.
