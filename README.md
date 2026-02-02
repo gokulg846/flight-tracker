@@ -74,7 +74,7 @@ You can run the entire system locally using Docker.
    pip install kafka-python
    python3 producer.py
 
-4. **View dashboard** Head to http://localhost:3000 to view the map with live data. (Future update will add files to host on streamlit)
+4. **View dashboard** Head to http://localhost:3000 to view the map with live data. 
 
 ## 📂 Project Structure
 ```
