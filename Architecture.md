@@ -41,9 +41,9 @@ graph LR
 ## 4. Component Deep Dive
 
 ### A. The Producer (`producer.py` / `mock_producer.py`)
-* **Responsibility:** Acts as the "Source of Truth."
+* **Responsibility:** Source of real time data
 * **Behavior:**
-    * Generates a dictionary containing geospatial telemetry (latitude, longitude, callsign, velocity).
+    * Reads/Generates a dictionary containing geospatial telemetry (latitude, longitude, callsign, velocity).
     * Serializes data to JSON.
     * Publishes messages to the Redpanda topic `shipments`.
 * **Key Library:** `kafka-python`
@@ -105,6 +105,7 @@ A single event travels through the system as follows:
 * **Persistent Storage:** Add a database (PostgreSQL/TimescaleDB) to save flight history.
 * **Authentication:** Secure the WebSocket endpoint using JWT tokens.
 * **ProtoBuf:** Replace JSON with Protocol Buffers for faster serialization in high-load scenarios.
+
 
 
 
