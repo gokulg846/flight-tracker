@@ -16,7 +16,7 @@ I built this project to move beyond standard CRUD apps and dive into **Event-Dri
 
 The goal was to answer a simple question: *How do companies like Uber or FlightAware track moving assets instantly?*
 
-The solution is a pipeline that generates simulated telemetry data, streams it through a high-throughput message broker (Redpanda), and pushes updates to a React frontend via WebSockets. The entire stack is containerized, meaning it spins up with a single command.
+The solution is a pipeline that consumes data from OpenSky API, streams it through a high-throughput message broker (Redpanda), and pushes updates to a React frontend via WebSockets. The entire stack is containerized, meaning it spins up with a single command.
 
 ### ⚡ Key Features
 * **Real-Time Visualization:** Smooth, moving markers on an interactive Leaflet map.
