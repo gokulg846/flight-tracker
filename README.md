@@ -8,8 +8,6 @@
 
 **A high-performance, event-driven simulation that tracks flights in real-time across a distributed system.**
 
-> **Note:** This project demonstrates a complete data streaming pipeline—from generation to visualization—replicating the architecture used by major logistics and aviation platforms.
-
 ---
 
 ## 📖 About The Project
