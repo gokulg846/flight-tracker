@@ -10,9 +10,10 @@ The system creates a continuous data pipeline:
 
 ```mermaid
 graph LR
-    P[Producer] -- "JSON Stream" --> B["Redpanda (Kafka)"]
-    B -- "Async Consumer" --> S["FastAPI Backend"]
-    S -- "WebSocket Push" --> C["React Frontend"]
+    subgraph "Infrastructure (Docker)"
+        P[Producer] -- "JSON Stream" --> B["Redpanda (Kafka)"]
+        B -- "Async Consumer" --> S["FastAPI Backend"]
+        S -- "WebSocket Push" --> C["React Frontend"]
     end
     
     subgraph "External World"
@@ -20,9 +21,9 @@ graph LR
     end
 
     %% Data Flow Styling
-    linkStyle 0 stroke:#f66,stroke-width:2px,color:red,label:"JSON Data";
+    linkStyle 0 stroke:#f66,stroke-width:2px,color:red;
     linkStyle 1 stroke:#f66,stroke-width:2px,color:red;
-    linkStyle 2 stroke:#6f6,stroke-width:2px,color:green,label:"WebSocket Stream";
+    linkStyle 2 stroke:#6f6,stroke-width:2px,color:green;
 ```
 ## 3. Technology Stack
 
@@ -103,3 +104,4 @@ A single event travels through the system as follows:
 * **Persistent Storage:** Add a database (PostgreSQL/TimescaleDB) to save flight history.
 * **Authentication:** Secure the WebSocket endpoint using JWT tokens.
 * **ProtoBuf:** Replace JSON with Protocol Buffers for faster serialization in high-load scenarios.
+
