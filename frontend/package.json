@@ -21,7 +21,11 @@
     "react-player": "^2.10.1",
     "styled-components": "^5.3.5",
     "web-vitals": "^2.1.4",
-    "react-helmet": "^6.1.0"
+    "react-helmet": "^6.1.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "@types/leaflet": "^1.9.8",
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",

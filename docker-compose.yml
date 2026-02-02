@@ -1,75 +1,141 @@
+# ============================================================================
+# Docker Compose Configuration for Real-Time Supply Chain Tracker
+# ============================================================================
+# This file defines all services required for the supply chain tracking system:
+# - Backend API (FastAPI)
+# - Frontend (React)
+# - Database (PostgreSQL)
+# - Message Broker (Redpanda/Kafka)
+# - Reverse Proxy (Traefik)
+# ============================================================================
+
 version: "3.9"
 
+# Network Configuration
+# Creates an isolated Docker network for all services to communicate
 networks:
   boilerplate_network:
     external: false
     
+# Service Definitions
 services:
+  # ========================================================================
+  # Backend API Service (FastAPI)
+  # ========================================================================
+  # Provides REST API endpoints and WebSocket connections for real-time
+  # flight/shipment tracking. Connects to Redpanda to consume messages
+  # and forward them to connected WebSocket clients.
+  # ========================================================================
   app:
+    # Mount application code for hot-reloading during development
     volumes:
         - ./app:/app/app
+    # Build from Dockerfile in the root directory
     build: .
     restart: ${RESTART}
+    # Load environment variables from .env file
     env_file:
         - ${ENV_FILE}
-    command: uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT}
+    # Start FastAPI with uvicorn, enable auto-reload for development
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT} --reload
+    # Expose API port directly (bypassing Traefik for direct access)
+    ports:
+      - "${API_PORT}:${API_PORT}"
     networks:
       - boilerplate_network
+    # Traefik labels for reverse proxy routing
     labels:
       - traefik.enable=true
       - traefik.http.routers.fastapi.rule=Host(`${API_HOSTNAME}`)
+      - traefik.http.routers.fastapi.entrypoints=web
       - traefik.http.routers.fastapi.tls=${ENABLE_TLS}
       - traefik.docker.network=boilerplate_network
       - traefik.http.routers.fastapi.tls.certresolver=myresolver
       - traefik.http.services.fastapi.loadbalancer.server.port=${API_PORT}
+    # Wait for database to be healthy before starting
     depends_on:
       db:
         condition: service_healthy
         
+  # ========================================================================
+  # PostgreSQL Database Service
+  # ========================================================================
+  # Stores user accounts, authentication tokens, and item/shipment metadata.
+  # Uses PostgreSQL 14 with persistent volume for data storage.
+  # ========================================================================
   db:
     image: postgres:14
     restart: ${RESTART}
+    # Database credentials from environment variables
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: ${PGDATA}
     networks:
       - boilerplate_network
+    # Health check ensures database is ready before dependent services start
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    # Persist database data to host filesystem
     volumes:
-      - ./data:/data
+      - ./postgres_data:/var/lib/postgresql/data
+    # Database is not exposed through Traefik (internal only)
     labels:
       - traefik.enable=false
       
+  # ========================================================================
+  # Frontend Service (React)
+  # ========================================================================
+  # React application that displays real-time flight/shipment tracking
+  # on an interactive map. Connects to backend via WebSocket for live updates.
+  # ========================================================================
   frontend:
-    volumes:
-      - ./frontend/src:/front/src
-      - /front/node_modules
-    restart: ${RESTART}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # Build arguments passed to Dockerfile
       args:
         - FRONT_CMD=${FRONT_CMD}
         - API_HOSTNAME=${API_HOSTNAME}
         - FRONT_PORT=${FRONT_PORT}
+    # Mount entire frontend directory for hot-reloading during development
+    # This allows code changes to be reflected immediately without rebuild
+    volumes:
+      - ./frontend:/front       # Maps everything (src, public, etc.)
+    # Expose React dev server port directly
+    ports:
+      - "3000:3000"
+    environment:
+      # Essential for Windows file watching - enables hot-reload on Windows
+      - CHOKIDAR_USEPOLLING=true
     env_file:
-        - ${ENV_FILE}
+      - ${ENV_FILE}
     networks:
       - boilerplate_network
+    # Start React development server
+    command: npm start
+    # Traefik labels for reverse proxy routing (optional, direct port access also works)
     labels:
       - traefik.enable=true
       - traefik.http.routers.frontend.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.frontend.entrypoints=web
       - traefik.http.routers.frontend.tls=${ENABLE_TLS}
       - traefik.docker.network=boilerplate_network
       - traefik.http.routers.frontend.tls.certresolver=myresolver
       - traefik.http.services.frontend.loadbalancer.server.port=${FRONT_PORT}
 
+  # ========================================================================
+  # Traefik Reverse Proxy Service
+  # ========================================================================
+  # Acts as a reverse proxy and load balancer, routing HTTP/HTTPS requests
+  # to appropriate backend services based on hostname rules. Provides
+  # automatic SSL certificate management via Let's Encrypt.
+  # ========================================================================
   traefik:
     image: "traefik:v2.6"
     restart: ${RESTART}
@@ -94,9 +160,16 @@ services:
       - boilerplate_network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # Persistent storage for SSL certificates
       - ./letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
+  # ========================================================================
+  # Whoami Test Service
+  # ========================================================================
+  # Simple test service to verify Traefik routing is working correctly.
+  # Returns information about the request (headers, host, etc.)
+  # ========================================================================
   whoami:
     image: "traefik/whoami"
     restart: ${RESTART}
@@ -106,3 +179,59 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+
+
+  # ========================================================================
+  # Redpanda Message Broker Service
+  # ========================================================================
+  # Kafka-compatible message broker for real-time data streaming.
+  # Producers send flight/shipment data to topics, consumers read from topics.
+  # Redpanda is a high-performance, Kafka-compatible alternative.
+  # ========================================================================
+  redpanda:
+    image: redpandadata/redpanda:latest 
+    container_name: redpanda
+    # Expose Kafka ports:
+    # - 9092: External access from host machine
+    # - 29092: Internal access from Docker containers
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    networks:
+      - boilerplate_network
+    command:
+      - redpanda start
+      # Resource allocation flags
+      - --overprovisioned          # Allow over-provisioning for development
+      - --smp 1                    # Single CPU core
+      - --memory 1G                # 1GB memory limit
+      - --reserve-memory 0M        # No reserved memory
+      - --node-id 0                # Node identifier
+      - --check=false              # Skip system checks
+      # Kafka listener addresses (internal and external)
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      # Advertised addresses for client connections
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      # Redpanda Proxy addresses (REST API)
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+  
+  # ========================================================================
+  # Redpanda Console Service
+  # ========================================================================
+  # Web-based UI for monitoring Redpanda/Kafka topics, messages, and clusters.
+  # Accessible at http://localhost:8081 for debugging and monitoring.
+  # ========================================================================
+  console:
+    image: redpandadata/console:latest
+    container_name: redpanda_console
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - "echo \"kafka:\n  brokers: ['redpanda:29092']\n\" > /tmp/config.yaml && /app/console --config.filepath=/tmp/config.yaml"
+    ports:
+      - "8081:8080"
+    depends_on:
+      - redpanda
+    networks:
+      - boilerplate_network

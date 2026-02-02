@@ -1,3 +1,19 @@
+"""
+Items API Router
+================
+This module defines REST API endpoints for managing items/shipments.
+
+Endpoints:
+- POST /: Create one or more items
+- GET /: Retrieve items (with optional filtering by ID)
+- PUT /: Update existing items
+- DELETE /: Delete items
+
+All endpoints require authentication and enforce access control:
+- Users can only access items they own or have been granted access to
+- Items are filtered based on user's access permissions
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
@@ -8,6 +24,7 @@ from sqlalchemy.future import select
 from typing import Optional
 from sqlalchemy import update
 
+# Create router instance for items endpoints
 router = APIRouter()
 
 
@@ -26,12 +43,29 @@ router = APIRouter()
 #     itemtable = await db.execute(select(ItemTable).filter(ItemTable.id == db_item.id))  # Solves greenlet_spawn
 #     return db_item
 
+# ============================================================================
+# Create Items Endpoint
+# ============================================================================
 @router.post(
     "/",
     response_model=List[Item])
 async def post_item(
         items: List[ItemCreate], db: Session = Depends(get_async_session), user: User = Depends(current_active_user),
 ):
+    """
+    Create one or more new items.
+    
+    The requesting user is automatically set as both owner and granted access
+    to all created items.
+    
+    Args:
+        items: List of item data to create
+        db: Database session
+        user: Currently authenticated user (from dependency)
+    
+    Returns:
+        List of created items
+    """
     out_items = []
     for item in items:
         db_item = ItemTable(**item.dict())
@@ -45,6 +79,9 @@ async def post_item(
     return out_items
 
 
+# ============================================================================
+# Get Items Endpoint
+# ============================================================================
 @router.get(
     "/",
     response_model=List[Item])
@@ -52,6 +89,23 @@ async def get_items(
         item_id: Optional[int] = None,
         db: Session = Depends(get_async_session), user: User = Depends(current_active_user),
 ):
+    """
+    Retrieve items accessible to the current user.
+    
+    If item_id is provided, returns only that item (if accessible).
+    Otherwise, returns all items the user has access to.
+    
+    Args:
+        item_id: Optional item ID to filter by
+        db: Database session
+        user: Currently authenticated user
+    
+    Returns:
+        List of accessible items
+    
+    Raises:
+        HTTPException 404: If no accessible items found
+    """
     items = []
     itemtable = None
     if item_id:
@@ -76,12 +130,29 @@ async def get_items(
     return access_filtered_items
 
 
+# ============================================================================
+# Update Items Endpoint
+# ============================================================================
 @router.put(
     "/",
     response_model=List[Item])
 async def update_items(
         items_in: List[Item], db: Session = Depends(get_async_session), user: User = Depends(current_active_user),
 ):
+    """
+    Update existing items.
+    
+    Only updates items that the user has access to. Items without access
+    are silently skipped.
+    
+    Args:
+        items_in: List of items with updated data
+        db: Database session
+        user: Currently authenticated user
+    
+    Returns:
+        List of updated items (only those the user had access to)
+    """
     items_out = []
     items = []
     itemtable = None
@@ -110,12 +181,29 @@ async def update_items(
     return items_out
 
 
+# ============================================================================
+# Delete Items Endpoint
+# ============================================================================
 @router.delete(
     "/",
     response_model=List[Item])
 async def delete_items(
         items_in: List[Item], db: Session = Depends(get_async_session), user: User = Depends(current_active_user),
 ):
+    """
+    Delete items.
+    
+    Only deletes items that the user has access to. Removes the item from
+    both the user's owned and available items lists.
+    
+    Args:
+        items_in: List of items to delete
+        db: Database session
+        user: Currently authenticated user
+    
+    Returns:
+        List of deleted items (only those the user had access to)
+    """
     items_out = []
     items = []
     itemtable = None
