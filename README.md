@@ -1,32 +1,50 @@
-# FastAPI + React boilerplate
+# ✈️ Real-Time Flight Tracker
 
-This is a, fairly opinionated, minimal boilerplate of FastAPI backend, React frontend and SQLAlchemy setup organized within docker-compose for convenient local development and deployment. Think https://github.com/tiangolo/full-stack-fastapi-postgresql with **way** less bells and whistles.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=flat&logo=react&logoColor=%2361DAFB)
+![Python](https://img.shields.io/badge/python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)
+![Redpanda](https://img.shields.io/badge/Redpanda-Kafka-orange)
 
-#### Why?
+**A high-performance, event-driven simulation that tracks flights in real-time across a distributed system.**
 
-I wanted to have a setup that I'll fully understand and that will be flexible, and no project out there was doing just the things I wanted. It does things I've found myself doing repetitively and as little of everything else as possible. Maybe it happens to do the things you want.
+> **Note:** This project demonstrates a complete data streaming pipeline—from generation to visualization—replicating the architecture used by major logistics and aviation platforms.
 
-### Features rundown
+---
 
-Aside from already mentioned tools it comes with:
+## 📖 About The Project
 
-* **FastAPI-users + basic 'Items' objects.** It's everything you find in https://github.com/fastapi-users/fastapi-users and a simple many-to-many relationship on top to get started.
-* **React ProtectedRoutes setup.** Simple starting point to manage user access to pages.
-* **Traefik + Let's Encrypt.** Non-obtrusive for development (see Usage) and fully functional for production under your domain.
+I built this project to move beyond standard CRUD apps and dive into **Event-Driven Architecture**.
 
-## Usage
+The goal was to answer a simple question: *How do companies like Uber or FlightAware track moving assets instantly?*
 
-Setup your (Postgres) database and adjust .env/.env.dev parts that describe databse connection. You may keep your data in /data, but be sure to add the folder to gitignore. You probably want to take a look at .env and .env.dev files in general, but that's the minimum.
+The solution is a pipeline that generates simulated telemetry data, streams it through a high-throughput message broker (Redpanda), and pushes updates to a React frontend via WebSockets. The entire stack is containerized, meaning it spins up with a single command.
 
-Following instruction assumes Compose V2, but you *should* be able to run in 1.3+ with little to no changes to the repo itself.
+### ⚡ Key Features
+* **Real-Time Visualization:** Smooth, moving markers on an interactive Leaflet map.
+* **Event Streaming:** Uses **Redpanda** (a drop-in Kafka replacement) to handle high-volume data ingestion.
+* **Instant Updates:** Replaces slow polling (HTTP GET) with **WebSockets** for millisecond latency.
+* **Fault Tolerance:** The producer and consumer are decoupled; if the frontend closes, the backend keeps processing.
+* **Dockerized:** No "works on my machine" issues—runs entirely in isolated containers.
 
-**For development**  `docker compose --env-file .env.dev up` should start your project. In order to avoid rebuilding everything after every change point your IDE to frontend and app containers.
+---
 
-**For production**  Edit .env to attach your domain. You may want to uncomment `#- "--certificatesresolvers.myresolver.acme.email={EMAIL}@${DOMAIN}.com"
-` in docker-compose.yml and edit EMAIL var for Let's Encrypt notifications.`docker compose --env-file .env up` should start your project.
+## 🛠️ Tech Stack
 
-Frontend file structure allows for working with Docker Desktop on Windows. That's just how I roll, if you are a better person you can easily reorganize them into folders.
+* **Ingestion:** Python (Simulated Producer)
+* **Broker:** Redpanda (Kafka Protocol)
+* **Backend:** FastAPI (Python, AsyncIO)
+* **Frontend:** React (TypeScript, Leaflet.js)
+* **Infrastructure:** Docker & Docker Compose
 
-## That's all
+---
 
-The project is intentionally miminal. It does however welcome contributions, especially from less frontend challenged developers, extra especially from those with any aesthetic sense, as both capabilities are severely missing in original creator.
+## 🏗️ Architecture
+
+Data flows through the system in a unidirectional pipeline:
+
+```mermaid
+graph LR
+    P[Producer] -- JSON Stream --> B[Redpanda (Kafka)]
+    B -- Async Consumer --> S[FastAPI Backend]
+    S -- WebSocket Push --> C[React Frontend]
