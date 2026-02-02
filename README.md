@@ -43,6 +43,6 @@ Data flows through the system in a unidirectional pipeline:
 
 ```mermaid
 graph LR
-    P[Producer] -- JSON Stream --> B[Redpanda (Kafka)]
-    B -- Async Consumer --> S[FastAPI Backend]
-    S -- WebSocket Push --> C[React Frontend]
+    P[Producer] -- "JSON Stream" --> B["Redpanda (Kafka)"]
+    B -- "Async Consumer" --> S["FastAPI Backend"]
+    S -- "WebSocket Push" --> C["React Frontend"]
