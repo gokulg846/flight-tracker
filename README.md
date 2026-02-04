@@ -23,7 +23,7 @@ The solution is a pipeline that consumes data from OpenSky API, streams it throu
 * **Event Streaming:** Uses **Redpanda** (a drop-in Kafka replacement) to handle high-volume data ingestion.
 * **Instant Updates:** Replaces slow polling (HTTP GET) with **WebSockets** for millisecond latency.
 * **Fault Tolerance:** The producer and consumer are decoupled; if the frontend closes, the backend keeps processing.
-* **Dockerized:**
+* **Dockerized**
 
 ---
 
