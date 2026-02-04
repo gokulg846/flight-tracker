@@ -49,7 +49,7 @@ graph LR
 
 ```
 
-*(For a deep dive into the engineering decisions, check out [ARCHITECTURE.md](./ARCHITECTURE.md))*
+*(For a deep dive into the engineering decisions, check out [ARCHITECTURE.md](./Architecture.md))*
 
 ## 🚀 Getting Started
 
