@@ -29,7 +29,7 @@ The solution is a pipeline that consumes data from OpenSky API, streams it throu
 
 ## 🛠️ Tech Stack
 
-* **Ingestion:** Python (Simulated Producer)
+* **Ingestion:** Python (Producer, OpenSky API)
 * **Broker:** Redpanda (Kafka Protocol)
 * **Backend:** FastAPI (Python, AsyncIO)
 * **Frontend:** React (TypeScript, Leaflet.js)
