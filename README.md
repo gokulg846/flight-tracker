@@ -74,7 +74,7 @@ You can run the entire system locally using Docker.
    pip install kafka-python
    python3 producer.py
 
-4. **View dashboard** Head to http://localhost:3000 to view the map with live data. 
+4. **View dashboard** Head to localhost site to view the map with live data. The current content configures the frontend to run on port 3000. 
 
 ## 📂 Project Structure
 ```
